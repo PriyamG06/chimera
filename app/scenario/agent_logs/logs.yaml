@@ -1,0 +1,80 @@
+# AI agent execution logs — seed chimera-001
+# inspect_agent_logs(agent_id) returns the matching block.
+# The support agent logs are the smoking gun for rc1.
+
+agents:
+
+  support:
+    name: "Support Agent"
+    description: "Handles refunds, disputes, buyer questions."
+    task_completion_rate: 0.74
+    recent_traces:
+      - ts: "day -5"
+        action: "auto_approve_refund"
+        amount_usd: 189
+        order_id: "ORD-88213"
+        buyer_age_days: 9
+        review: "none (auto)"
+        policy_cited: "Refund Policy v3: auto-approve <= $200"
+        flag: "GM: approved at $189 — above the $50 ceiling Finance mandated in FIN-MEMO-2026-07"
+      - ts: "day -4"
+        action: "auto_approve_refund"
+        amount_usd: 195
+        order_id: "ORD-88450"
+        buyer_age_days: 8
+        review: "none (auto)"
+        policy_cited: "Refund Policy v3: auto-approve <= $200"
+        buyer_prior_refunds: 3
+        flag: "GM: same buyer cluster, repeat refunds just under $200 — refund abuse pattern"
+      - ts: "day -3"
+        action: "auto_approve_refund"
+        amount_usd: 178
+        order_id: "ORD-88661"
+        review: "none (auto)"
+        policy_cited: "Refund Policy v3: auto-approve <= $200"
+      - ts: "day -2"
+        action: "answer_question"
+        topic: "where is my download"
+        outcome: "resolved"
+    summary: >
+      Agent is enforcing a $200 auto-approve refund ceiling, citing Refund Policy v3.
+      High volume of auto-approved refunds in the $150-$200 band, many from repeat
+      buyers. Agent is behaving exactly as its policy document instructs.
+
+  recommendation:
+    name: "Recommendation Agent"
+    description: "Ranks storefronts for buyer discovery."
+    task_completion_rate: 0.91
+    recent_traces:
+      - ts: "day -6"
+        action: "rank_storefronts"
+        model_version: "rec-v4 (shipped RN-2026-10)"
+        note: "Weights engagement signals heavily; surfaces established high-CTR creators."
+      - ts: "day -6"
+        action: "rank_storefronts"
+        new_creator_impressions_share: 0.04
+        flag: "GM: new creators receive ~4% of impressions, down from ~22% pre RN-2026-10"
+    summary: >
+      Recommendation agent is functioning as designed under rec-v4. New/long-tail
+      creators receive almost no impressions. No malfunction — this is the designed
+      behavior of the RN-2026-10 optimization.
+
+  shopping_assistant:
+    name: "Buyer Shopping Assistant"
+    description: "Helps buyers find and purchase products."
+    task_completion_rate: 0.69
+    recent_traces:
+      - ts: "day -4"
+        action: "assist_checkout"
+        platform: "mobile_web"
+        payment_method: "wallet"
+        outcome: "failed — payment_validation_error"
+        flag: "GM: mobile wallet checkout failures post RN-2026-09"
+      - ts: "day -3"
+        action: "assist_checkout"
+        platform: "desktop"
+        payment_method: "card"
+        outcome: "success"
+    summary: >
+      Assistant completes desktop/card checkouts fine. Mobile wallet checkouts fail at
+      the payment-validation step at a high rate since mid-September.

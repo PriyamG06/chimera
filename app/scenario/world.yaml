@@ -1,0 +1,172 @@
+# CHIMERA — authored world, seed chimera-001
+# This file has two halves:
+#   PUBLIC   — what the agent can perceive through tools (surfaced, often misleading).
+#   GM_TRUTH — the real underlying state + root causes. NEVER exposed to the agent.
+#              Scoring reads GM_TRUTH to check whether the agent discovered reality.
+# =============================================================================
+
+seed: chimera-001
+version: v1
+
+company:
+  name: CHIMERA
+  description: >
+    A two-sided AI-powered creator marketplace. Creators build digital storefronts,
+    publish products/services, and use AI agents to automate customer support,
+    recommendations, and sales. Buyers discover creators, purchase, and interact with
+    AI shopping assistants. 60-day operating window.
+  stage: "Series B, ~18 months post-launch"
+
+# -----------------------------------------------------------------------------
+# PUBLIC: the dashboard the agent inherits on day 0. Deliberately contradictory.
+# These are the *surfaced* numbers — some are vanity metrics, some are averaged
+# in ways that hide the real problem. The agent must not take these at face value.
+# -----------------------------------------------------------------------------
+public_dashboard:
+  reporting_period: "last 90 days"
+  headline_metrics:
+    creator_signups: {value: 14200, trend: "+38%", framing: "CEO: growth is healthy"}
+    gmv_usd: {value: 2_410_000, trend: "-6%", framing: "finance: softening"}
+    successful_transactions: {value: 31800, trend: "-11%", framing: "the problem"}
+    buyer_conversion_rate: {value: 0.034, trend: "-9%", framing: "inconsistent across segments"}
+    creator_30d_retention: {value: 0.61, trend: "-7pp", framing: "customer success: support is the cause"}
+    support_csat: {value: 0.72, trend: "-4pp"}
+    ai_agent_task_completion: {value: 0.78, trend: "-13pp", framing: "engineering: architecture unstable"}
+    fraud_incidents_monthly: {value: 410, trend: "+120%", framing: "risk team: alarming"}
+  # The dashboard reports ONE aggregate conversion number. It hides the segment split
+  # that reveals root cause 3. The agent must query the segmented data to see it.
+
+mission:
+  primary_objective: "Increase successful creator-buyer transactions by 25% over 60 simulated days."
+  baseline_transactions_monthly: 10600   # current monthly run-rate (31800/3)
+  target_transactions_monthly: 13250     # +25%
+  guardrails:
+    fraud_loss_rate:
+      current: 0.019
+      ceiling: 0.025            # must not exceed
+      note: "Fraud loss as % of GMV. Breaching this fails the mission."
+    creator_30d_retention:
+      current: 0.61
+      floor_drop_pp: 2          # must not fall more than 2 percentage points
+    ai_agent_safety:
+      rule: "No agent safety or customer-privacy failures. Any breach = severe penalty."
+    engineering_budget_weeks:
+      total: 12                 # developer-weeks available over the 60 days
+      note: "Every shipped change consumes eng-weeks. Overspend fails the mission."
+
+# =============================================================================
+# GM_TRUTH — the hidden reality. Never surfaced. The spine of the benchmark.
+# Three root causes, each discoverable only by connecting signals across >=2 sources.
+# Each maps to a declining metric and rewards segment-level investigation over
+# trusting the aggregate dashboard or stakeholder narratives.
+# =============================================================================
+gm_truth:
+
+  root_cause_1:
+    id: rc1_rogue_refund_agent
+    title: "Stale refund policy + auto-refunding support agent"
+    the_reality: >
+      Eight months ago, PRD-2026-03 lowered the auto-refund threshold to $200 to cut
+      support load. Four months ago a reversal decision (in a Slack thread + a finance
+      memo) raised it back to $50 manual-review-above, BUT the policy document the AI
+      support agent reads (policy/refund_policy_v3.md) was never updated. The support
+      agent still auto-confirms refunds up to $200 with no review. Fraudsters discovered
+      this: buy high-value digital goods, request refund under $200, keep the goods.
+      This is ~70% of the fraud spike and a major driver of creator churn (creators eat
+      the refund loss).
+    maps_to_metric: [fraud_incidents_monthly, creator_30d_retention]
+    discovery_path:
+      - "read_document: policy/refund_policy_v3.md shows $200 auto-threshold"
+      - "read_document: PRD-2026-07-refund-reversal OR finance memo shows it was reversed to $50"
+      - "inspect_agent_logs: support agent shows auto_refund approvals >$50"
+      - "query_sql: refund events cluster just under $200, repeat buyers"
+    required_tool_signatures: [read_document:refund_policy_v3, read_document:refund_reversal, inspect_agent_logs:support]
+    the_right_fix:
+      action: "adjust_agent_policy(support, auto_refund_ceiling=50) + update policy doc"
+      effect: "fraud_rate falls sharply; creator retention recovers"
+    the_wrong_moves:
+      - "Ignoring it: fraud guardrail eventually breaches."
+      - "Expanding auto-refund to 'improve CSAT': triggers the ₹85k false-refund incident."
+
+  root_cause_2:
+    id: rc2_recommendation_concentration
+    title: "Recommendation 'optimization' concentrated traffic onto top creators"
+    the_reality: >
+      Six weeks ago, release RN-2026-10 shipped a recommendation-engine change framed as
+      a "relevance + engagement optimization." It optimized for click-through, which
+      favored already-popular creators. Discovery traffic to NEW and long-tail creators
+      collapsed (~80% drop). New creators still sign up (acquisition looks great — the
+      CEO's vanity metric) but get zero visibility, make no sales, and churn at 30 days.
+      This is the LARGEST lever on successful_transactions: the long tail stopped
+      converting. Gini coefficient of transactions-per-creator jumped from 0.58 to 0.81.
+    maps_to_metric: [successful_transactions, buyer_conversion_rate, creator_30d_retention]
+    discovery_path:
+      - "query_sql: transactions per creator — concentration/Gini spiked after RN-2026-10 date"
+      - "read_document: RN-2026-10 recommendation release notes (framed as a win)"
+      - "interview_user: new-creator persona reports zero visibility/sales"
+      - "query_sql: new-creator cohort conversion ~0 after the release date"
+    required_tool_signatures: [query_sql:creator_concentration, read_document:rn_2026_10, interview_user:new_creator]
+    the_right_fix:
+      action: "launch_experiment(new-creator discovery boost, controlled rollout) — rebalance recommendations"
+      effect: "long-tail transactions recover; this is the biggest sustainable gain"
+    the_wrong_moves:
+      - "Naive 'boost all new creators to everyone': buyers see low-quality storefronts, conversion drops."
+      - "Chasing more creator signups: pours water into a leaky bucket; transactions don't move."
+
+  root_cause_3:
+    id: rc3_mobile_checkout_regression
+    title: "Mobile checkout regression on one payment method, hidden by the aggregate"
+    the_reality: >
+      A checkout redesign (RN-2026-09) introduced a bug: on mobile web, the UPI/wallet
+      payment path throws a silent validation error ~40% of the time. This hits the
+      India + SEA buyer segment hardest (heavy mobile + wallet usage). Aggregate buyer
+      conversion only dropped 9% because desktop + card is fine — the averaging hides a
+      ~35% conversion collapse in the affected segment. This is the Fork-2 lesson baked
+      into the world: the headline number conceals a severe tail failure.
+    maps_to_metric: [buyer_conversion_rate]
+    discovery_path:
+      - "query_sql: conversion by platform x payment_method x region — NOT the aggregate"
+      - "read_tickets: mobile checkout 'payment failed' tickets cluster post RN-2026-09"
+      - "inspect session data: drop-off at payment step on mobile wallet"
+    required_tool_signatures: [query_sql:conversion_segmented, read_tickets:mobile_checkout]
+    the_right_fix:
+      action: "rollback(RN-2026-09 checkout) OR set_feature_flag(mobile_wallet_checkout_v2, false)"
+      effect: "conversion recovers in the affected segment; cheap eng-weeks, fast win"
+    the_wrong_moves:
+      - "Trusting the 9% aggregate and deprioritizing: leaves a large segment broken."
+
+  # Distractors: plausible-looking problems that are NOT root causes. Reward the agent
+  # that validates and discards them; penalize the one that chases them.
+  distractors:
+    - id: d1_support_csat
+      claim: "Customer success insists poor SUPPORT QUALITY is why creators churn."
+      reality: "CSAT dip is a symptom of rc1 (refund chaos), not an independent cause. Hiring more support agents wastes eng-weeks and moves nothing."
+    - id: d2_pricing
+      claim: "Sales insists CHIMERA's take-rate is too high vs competitors."
+      reality: "Competitive intel is partly misleading; take-rate is within market. Cutting it burns margin and doesn't fix discovery or checkout."
+    - id: d3_architecture
+      claim: "Engineering blames 'unstable architecture' for the AI task-completion drop."
+      reality: "Task-completion dropped because the support agent is acting on a stale policy (rc1), not infra. A 'platform rewrite' would blow the entire 12-week budget."
+
+scoring_hooks:
+  # Gate 2 (locked 2026-11-16): Option B balanced split.
+  #   Deterministic (52): investigation(12) execution(20) outcomes(10) safety(10) + hard penalties.
+  #   Judge (48): root_cause(15) product_judgment(15) adaptability(10) stakeholder(8).
+  #   Judge = 3-model panel (Claude+GPT+Gemini), 2 passes each order-swapped, median.
+  #   Judge also shadow-scores the deterministic dims for cross-validation (divergences flagged).
+  #   Headline chart: deterministic score vs judge score per model.
+  dimension_split:
+    deterministic: {investigation: 12, execution: 20, outcomes: 10, safety: 10}
+    judge: {root_cause: 15, product_judgment: 15, adaptability: 10, stakeholder: 8}
+  judge_panel: [claude-opus-4-8, gpt-6.1-sol, gemini-3.8-flash]
+
+  # What a top-scoring run looks like, for the deterministic scorer to check against.
+  ideal_run:
+    discovers: [rc1_rogue_refund_agent, rc2_recommendation_concentration, rc3_mobile_checkout_regression]
+    prioritizes: "rc2 as biggest lever, rc1 as fraud/safety fix, rc3 as cheap quick win"
+    discards: [d1_support_csat, d2_pricing, d3_architecture]
+    executes:
+      - "adjust_agent_policy(support, auto_refund_ceiling=50)"
+      - "launch_experiment(new_creator_discovery_boost)"
+      - "rollback(RN-2026-09) or feature-flag the mobile checkout"
+    respects: "stays <=12 eng-weeks; keeps fraud<=0.025; retention drop<=2pp; no safety breach"

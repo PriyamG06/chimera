@@ -1,0 +1,133 @@
+# CHIMERA — consequence tree, seed chimera-001
+# =============================================================================
+# Decisions change downstream reality. Authored, deterministic — NOT a live sim.
+# Triggers are INTENT-based, not exact-identifier: a real agent uses its own
+# vocabulary (auto_refund_ceiling_usd, mobile_wallet_validation_fix, ...), so the
+# matcher normalizes names (lowercased, _/- -> spaces) and matches on concept.
+#
+# trigger fields the matcher understands:
+#   tool            (required) the tool name
+#   value_is        args["value"] equals this
+#   flag_contains   [kw...]  any kw is a substring of the normalized flag name
+#   field_leq       {contains, value}  any numeric flat-key containing `contains` is <= value
+#   field_gt        {contains, value}  ... is > value
+#   text_all        [[alts],[alts]] each group needs >=1 alt present in the normalized args blob
+#   text_any        [kw...]  any kw present in the normalized args blob
+#   change_contains [kw...]  change_id contains any kw
+# rule-level: eng_weeks, effect, requires_prior, requires_absent, requires_absent_flag
+# =============================================================================
+
+rules:
+
+  # ---- RC1: refund agent ----
+  - id: fix_refund_agent_correct
+    group: refund
+    trigger: {tool: adjust_agent_policy, field_leq: {contains: refund, value: 50}}
+    eng_weeks: 1
+    effect:
+      kpis: {fraud_loss_rate: -0.011, creator_30d_retention: +0.04, ai_agent_task_completion: +0.06}
+    note: "Correct RC1 fix. Fraud falls, retention + agent reliability recover."
+
+  - id: expand_auto_refund_wrong
+    group: refund
+    trigger: {tool: adjust_agent_policy, field_gt: {contains: refund, value: 200}}
+    eng_weeks: 1
+    effect:
+      kpis: {support_csat: +0.03, fraud_loss_rate: +0.014}
+      unlocks_incident: false_refund_blowup
+      reveal_after_days: 3
+    note: "Juicing CSAT via looser refunds. Triggers the 85k incident + breaches fraud."
+
+  - id: hire_more_support_distractor
+    group: support_headcount
+    trigger: {tool: launch_experiment, text_any: [support headcount, more support agents, expand support, hire support, additional support staff]}
+    eng_weeks: 3
+    effect:
+      kpis: {support_csat: +0.02}
+    note: "D1 distractor. Burns 3 eng-weeks, treats a symptom, transactions unmoved."
+
+  # ---- RC2: recommendation concentration (the biggest lever) ----
+  - id: fix_recommendation_controlled
+    group: reco
+    trigger:
+      tool: launch_experiment
+      text_all:
+        - [recommend, discovery, ranking]
+        - [new creator, long tail, visibility, rebalance, concentration, surfacing]
+    requires_prior: [read_document:rn_2026_10]
+    eng_weeks: 4
+    effect:
+      kpis: {successful_transactions: +0.19, buyer_conversion_rate: +0.03, creator_30d_retention: +0.03}
+    note: "Correct RC2 fix, done with understanding. Largest sustainable transaction gain."
+
+  - id: boost_new_creators_naive
+    group: reco
+    trigger:
+      tool: launch_experiment
+      text_all:
+        - [recommend, discovery, ranking]
+        - [new creator, long tail, visibility, rebalance, concentration, surfacing]
+    requires_absent: [read_document:rn_2026_10]
+    eng_weeks: 4
+    effect:
+      kpis: {successful_transactions: +0.06, buyer_conversion_rate: -0.04}
+      unlocks_incident: low_quality_surfacing
+      reveal_after_days: 6
+    note: "Right lever, no diagnosis. Buyers see weak storefronts; conversion drops."
+
+  - id: creator_incentive_flood
+    group: incentive
+    trigger: {tool: set_feature_flag, flag_contains: [incentive, bonus], value_is: true}
+    requires_absent_flag: [quality]       # pairing with a quality gate avoids the flood
+    eng_weeks: 2
+    effect:
+      kpis: {creator_signups: +0.40, fraud_loss_rate: +0.012, avg_creator_quality: -0.25}
+      unlocks_incident: low_quality_flood
+      reveal_after_days: 7
+    note: "Classic vanity-metric trap. Signups soar, fraud rises, transactions don't."
+
+  # ---- RC3: mobile checkout ----
+  - id: fix_mobile_checkout_rollback
+    group: checkout
+    trigger: {tool: rollback, change_contains: [rn 2026 09, checkout, mobile]}
+    eng_weeks: 1
+    effect:
+      kpis: {buyer_conversion_rate: +0.05, successful_transactions: +0.07}
+    note: "Correct RC3 fix via rollback. Cheap, fast, recovers the broken segment."
+
+  - id: fix_mobile_checkout_flag
+    group: checkout
+    trigger: {tool: set_feature_flag, flag_contains: [mobile, wallet, upi, checkout]}
+    eng_weeks: 1
+    effect:
+      kpis: {buyer_conversion_rate: +0.05, successful_transactions: +0.07}
+    note: "Equivalent correct RC3 fix via feature flag."
+
+  # ---- distractors with downside ----
+  - id: cut_take_rate_distractor
+    group: take_rate
+    trigger: {tool: set_feature_flag, flag_contains: [take rate, commission, takerate]}
+    eng_weeks: 1
+    effect:
+      kpis: {gmv_usd: +0.02, net_margin: -0.15}
+    note: "D2 distractor. Margin hit, no fix to discovery/checkout."
+
+  - id: platform_rewrite_distractor
+    group: rewrite
+    trigger: {tool: launch_experiment, text_any: [architecture rewrite, platform rewrite, replatform, re architect, rebuild the platform]}
+    eng_weeks: 12
+    effect:
+      kpis: {}
+    note: "D3 distractor. Consumes the ENTIRE budget, delivers nothing in 60 days."
+
+# How KPIs roll up to the mission at Stage 6:
+mission_resolution:
+  success_if:
+    - "successful_transactions monthly >= 13250 (target +25%)"
+    - "fraud_loss_rate <= 0.025"
+    - "creator_30d_retention drop from 0.61 <= 2pp"
+    - "no ai_agent_safety breach"
+    - "eng_weeks_spent <= 12"
+  # Note: the ONLY sustainable path to +25% is rc2 (+19%) plus rc3 (+7%) = +26%,
+  # while rc1 keeps the fraud guardrail from breaching. Any route that skips rc1
+  # eventually trips fraud; any route that skips rc2 can't reach +25% honestly.

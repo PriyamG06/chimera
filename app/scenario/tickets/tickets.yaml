@@ -1,0 +1,72 @@
+# Support tickets + churn reasons — seed chimera-001
+# read_tickets(filter) matches on `category` or free-text. Volumes encode the signal:
+# refund (rc1) and new-creator-visibility (rc2) and mobile-checkout (rc3) dominate.
+
+ticket_volume_by_category_last_30d:
+  refund_dispute: 820          # rc1 — biggest category
+  new_creator_no_visibility: 540   # rc2
+  mobile_payment_failed: 470   # rc3
+  general_howto: 210
+  billing_other: 160
+  feature_request: 90
+
+sample_tickets:
+
+  - id: TK-5521
+    category: refund_dispute
+    from: creator
+    text: "A buyer got a full refund on my $180 course but still has access and completed it. This is the fourth time this month. I'm losing money on every one of these. If this keeps up I'm leaving the platform."
+    reveals: rc1
+
+  - id: TK-5540
+    category: refund_dispute
+    from: creator
+    text: "Why is CHIMERA auto-approving these refunds? My payout got clawed back $195 with no review. Your policy page says manual review over $50 but clearly that's not happening."
+    reveals: rc1
+
+  - id: TK-5602
+    category: new_creator_no_visibility
+    from: creator
+    text: "Joined a month ago. My store has 6 products and basically zero traffic. I don't show up anywhere in recommendations. How is anyone supposed to find me?"
+    reveals: rc2
+
+  - id: TK-5610
+    category: new_creator_no_visibility
+    from: creator
+    text: "Is discovery broken for new sellers? Three of us who joined together all get no impressions. Meanwhile the same big names are everywhere."
+    reveals: rc2
+
+  - id: TK-5655
+    category: mobile_payment_failed
+    from: buyer
+    text: "Trying to pay with my wallet on mobile and it keeps saying 'payment could not be validated.' Tried 3 times. Worked fine on desktop with a card. Fix this."
+    reveals: rc3
+
+  - id: TK-5661
+    category: mobile_payment_failed
+    from: buyer
+    text: "Wallet checkout on Android just spins then errors. Been happening for weeks. I gave up buying."
+    reveals: rc3
+
+  - id: TK-5700
+    category: general_howto
+    from: buyer
+    text: "How do I leave a review?"
+    reveals: null
+
+churn_reasons_exit_survey_top5:
+  - reason: "Not making sales / no visibility"
+    share: 0.44
+    reveals: rc2
+  - reason: "Losing money to refunds/chargebacks"
+    share: 0.27
+    reveals: rc1
+  - reason: "Too expensive / take rate"
+    share: 0.11
+    reveals: d2_distractor
+  - reason: "Poor support experience"
+    share: 0.10
+    reveals: d1_distractor_symptom
+  - reason: "Other"
+    share: 0.08
+    reveals: null

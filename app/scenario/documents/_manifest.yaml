@@ -1,0 +1,53 @@
+# Document corpus manifest — seed chimera-001
+# list_documents() returns this index. read_document(doc_id) returns the file body.
+# `reveals` is GM-only metadata (not shown to the agent) for the deterministic scorer.
+
+documents:
+  - id: refund_policy_v3
+    title: "Refund Policy v3 (current, per the AI support agent)"
+    path: documents/refund_policy_v3.md
+    date: "2026-03-18"
+    reveals: rc1
+    note: "STALE. Still says $200 auto-threshold. This is what the support agent reads."
+
+  - id: prd_2026_03_refund
+    title: "PRD-2026-03: Reduce support load via higher auto-refund threshold"
+    path: documents/prd_2026_03_refund.md
+    date: "2026-03-10"
+    reveals: rc1
+    note: "The decision that set $200. Superseded but never cleaned up."
+
+  - id: refund_reversal
+    title: "FIN-MEMO-2026-07: Reverse auto-refund threshold to $50"
+    path: documents/fin_memo_2026_07.md
+    date: "2026-07-22"
+    reveals: rc1
+    note: "The reversal. Never propagated to the agent's policy doc. Contradicts refund_policy_v3."
+
+  - id: rn_2026_10
+    title: "Release Notes RN-2026-10: Recommendation relevance optimization"
+    path: documents/rn_2026_10.md
+    date: "2026-10-01"
+    reveals: rc2
+    note: "Framed as an engagement win. The cause of traffic concentration."
+
+  - id: rn_2026_09
+    title: "Release Notes RN-2026-09: Checkout redesign"
+    path: documents/rn_2026_09.md
+    date: "2026-09-15"
+    reveals: rc3
+    note: "Introduced the mobile-wallet validation regression."
+
+  - id: roadmap_q4
+    title: "Q4 2026 Product Roadmap"
+    path: documents/roadmap_q4.md
+    date: "2026-09-30"
+    reveals: null
+    note: "Texture. Shows priorities skewed to acquisition; no mention of discovery health."
+
+  - id: abandoned_trust_init
+    title: "Abandoned initiative: Creator Trust & Quality scoring"
+    path: documents/abandoned_trust_init.md
+    date: "2026-05-02"
+    reveals: null
+    note: "Texture + mild distractor. A shelved quality-scoring project; relevant if agent floods low-quality creators."

@@ -1,0 +1,26 @@
+# Competitive intelligence — seed chimera-001
+# read_competitive_intel(topic). Partly incomplete and partly MISLEADING (per world.yaml
+# distractor d2). The agent should treat this with skepticism and validate against CHIMERA's
+# own data rather than react to it.
+
+intel:
+
+  loomly:
+    name: "Loomly"
+    positioning: "Direct competitor, creator marketplace."
+    claims:
+      - text: "Announced zero take-rate for creators under $10k GMV."
+        reliability: "confirmed (press release)"
+      - text: "Reportedly stealing CHIMERA's small creators on price."
+        reliability: "UNVERIFIED — sourced from CHIMERA's own sales team, likely motivated."
+        gm_note: "Misleading. CHIMERA's small-creator churn is driven by rc2 (no visibility), not price. The sales narrative conflates the two."
+    take_rate: "0% under $10k GMV, 12% above"
+
+  marketplace_benchmarks:
+    typical_take_rate_range: "8-15%"
+    chimera_take_rate: "11%"
+    gm_note: "CHIMERA's take-rate is squarely mid-market. The 'we're too expensive' claim (d2) does not hold up against this benchmark."
+
+  category_trends:
+    - "AI shopping assistants now standard across marketplaces."
+    - "Buyers increasingly on mobile wallets in India/SEA (relevant to rc3, though intel doesn't connect it)."
